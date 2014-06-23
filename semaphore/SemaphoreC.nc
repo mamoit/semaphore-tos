@@ -7,36 +7,52 @@
 module SemaphoreC @safe()
 {
   uses interface Timer<TMilli> as Timer0;
-  uses interface Timer<TMilli> as Timer1;
-  uses interface Timer<TMilli> as Timer2;
   uses interface Leds;
   uses interface Boot;
 }
+
 implementation
 {
+  uint8_t  light      = 0;        // current light on state machine
+  uint16_t timeGreen  = 5 * 1000; // timeout para verde
+  uint16_t timeYellow = 1 * 1000; // timeout para yellow
+  uint16_t timeRed    = 5 * 1000; // timeout para vermelho
+
   event void Boot.booted()
   {
-    call Timer0.startPeriodic( 250 );
-    call Timer1.startPeriodic( 500 );
-    call Timer2.startPeriodic( 1000 );
+    call Timer0.startPeriodic( timeGreen );
+    call Leds.led0On();
+    call Leds.led1Off();
+    call Leds.led2Off();
   }
 
   event void Timer0.fired()
   {
-    dbg("SemaphoreC", "Timer 0 fired @ %s.\n", sim_time_string());
-    call Leds.led0Toggle();
-  }
-  
-  event void Timer1.fired()
-  {
-    dbg("SemaphoreC", "Timer 1 fired @ %s \n", sim_time_string());
-    call Leds.led1Toggle();
-  }
-  
-  event void Timer2.fired()
-  {
-    dbg("SemaphoreC", "Timer 2 fired @ %s.\n", sim_time_string());
-    call Leds.led2Toggle();
+    if (light == 0) {
+      call Leds.led0Off();
+      call Leds.led1On();
+      call Timer0.startPeriodic( timeYellow );
+      light = 1;
+      dbg("SemaphoreC", "RED -> YELLOW");
+    } else if (light == 1) {
+      call Leds.led1Off();
+      call Leds.led2On();
+      call Timer0.startPeriodic( timeRed );
+      light = 2;
+      dbg("SemaphoreC", "YELLOW -> GREEN");
+    } else if (light == 2) {
+      call Leds.led2Off();
+      call Leds.led1On();
+      call Timer0.startPeriodic( timeYellow );
+      light = 3;
+      dbg("SemaphoreC", "GREEN -> YELLOW");
+    } else if (light == 3) {
+      call Leds.led1Off();
+      call Leds.led0On();
+      call Timer0.startPeriodic( timeGreen );
+      light = 0;
+      dbg("SemaphoreC", "YELLOW -> RED");
+    }
   }
 }
 
