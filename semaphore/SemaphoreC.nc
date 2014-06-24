@@ -24,81 +24,77 @@ module SemaphoreC @safe()
 
 implementation
 {
-  uint8_t  light      = 0;        // current light on state machine
-  uint16_t timeGreen  = 5 * 1000; // timeout to green
-  uint16_t timeYellow = 1 * 1000; // timeout to yellow
-  uint16_t timeRed    = 5 * 1000; // timeout to red
-  
-  uint16_t ncars      = 0;        // number of cars in queue
+	uint8_t  light      = 0;        // current light on state machine
+	uint16_t timeGreen  = 5 * 1000; // timeout to green
+	uint16_t timeYellow = 1 * 1000; // timeout to yellow
+	uint16_t timeRed    = 5 * 1000; // timeout to red
 
-  event void Boot.booted()
-  {
-    call Timer0.startPeriodic( timeGreen );
-    call Leds.led0On();
-    call Leds.led1Off();
-    call Leds.led2Off();
-  }
+	uint16_t ncars      = 0;        // number of cars in queue
 
-  event void Timer0.fired()
-  {
-    if (light == 0) {
-      call Leds.led0Off();
-      call Leds.led1On();
-      call Timer0.startPeriodic( timeYellow );
-      light = 1;
-      dbg("SemaphoreC", "RED -> YELLOW");
-    } else if (light == 1) {
-      call Leds.led1Off();
-      call Leds.led2On();
-      call Timer0.startPeriodic( timeRed );
-      light = 2;
-      dbg("SemaphoreC", "YELLOW -> GREEN");
-    } else if (light == 2) {
-      call Leds.led2Off();
-      call Leds.led1On();
-      call Timer0.startPeriodic( timeYellow );
-      light = 3;
-      dbg("SemaphoreC", "GREEN -> YELLOW");
-    } else if (light == 3) {
-      call Leds.led1Off();
-      call Leds.led0On();
-      call Timer0.startPeriodic( timeGreen );
-      light = 0;
-      dbg("SemaphoreC", "YELLOW -> RED");
-    }
-  }
-  
-  // Serial Control
-  event void SerialControl.startDone(error_t error) { }
-  event void SerialControl.stopDone(error_t error) { }
+	event void Boot.booted() {
+		call Timer0.startPeriodic( timeGreen );
+		call Leds.led0On();
+		call Leds.led1Off();
+		call Leds.led2Off();
+	}
 
-  // Radio Control
-  event void RadioControl.startDone(error_t error) {
-    /* Once the radio has started, we can setup low-power listening, and
-       start the collection and dissemination services. Additionally, we
-       set ourselves as the (sole) root for the theft alert dissemination
-       tree */
-    if (error == SUCCESS)
-      {
-        call LowPowerListening.setLocalWakeupInterval(512);
-        call CollectionControl.start();
-        call RootControl.setRoot();
-      }
-  }
-  event void RadioControl.stopDone(error_t error) { }
+	event void Timer0.fired(){
+		if (light == 0) {
+			call Leds.led0Off();
+			call Leds.led1On();
+			call Timer0.startPeriodic( timeYellow );
+			light = 1;
+			dbg("SemaphoreC", "RED -> YELLOW");
+		} else if (light == 1) {
+			call Leds.led1Off();
+			call Leds.led2On();
+			call Timer0.startPeriodic( timeRed );
+			light = 2;
+			dbg("SemaphoreC", "YELLOW -> GREEN");
+		} else if (light == 2) {
+			call Leds.led2Off();
+			call Leds.led1On();
+			call Timer0.startPeriodic( timeYellow );
+			light = 3;
+			dbg("SemaphoreC", "GREEN -> YELLOW");
+		} else if (light == 3) {
+			call Leds.led1Off();
+			call Leds.led0On();
+			call Timer0.startPeriodic( timeGreen );
+			light = 0;
+			dbg("SemaphoreC", "YELLOW -> RED");
+		}
+	}
 
-  // Recieve from collection
-  event message_t *CarsReceive.receive(message_t* msg, void* payload, uint8_t len)
-  {
-    car_t *newCar = payload;
+	// Serial Control
+	event void SerialControl.startDone(error_t error) { }
+	event void SerialControl.stopDone(error_t error) { }
 
-    call Leds.led0Toggle();
+	// Radio Control
+	event void RadioControl.startDone(error_t error) {
+	/* Once the radio has started, we can setup low-power listening, and
+		start the collection and dissemination services. Additionally, we
+		set ourselves as the (sole) root for the theft alert dissemination
+		tree */
+		if (error == SUCCESS) {
+			call LowPowerListening.setLocalWakeupInterval(512);
+			call CollectionControl.start();
+			call RootControl.setRoot();
+		}
+	}
+	event void RadioControl.stopDone(error_t error) { }
 
-    if (len == sizeof(*newCar))
-      {
-        ncars ++;
-      }
-    return msg;
-  }
+	// Recieve from collection
+	event message_t *CarsReceive.receive(message_t* msg, void* payload, uint8_t len)
+	{
+		car_t *newCar = payload;
+
+		call Leds.led0Toggle();
+
+		if (len == sizeof(*newCar)) {
+			ncars ++;
+		}
+		return msg;
+	}
 }
 
