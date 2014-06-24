@@ -2,6 +2,7 @@
  *
  **/
 
+#include "../sem.h"
 #include "Timer.h"
 
 module SemaphoreC @safe()
@@ -30,10 +31,6 @@ implementation
   
   uint16_t ncars      = 0;        // number of cars in queue
 
-  typedef nx_struct car_t {
-    nxle_uint8_t plate;
-  } car_t;
-  
   event void Boot.booted()
   {
     call Timer0.startPeriodic( timeGreen );
@@ -93,11 +90,11 @@ implementation
   // Recieve from collection
   event message_t *CarsReceive.receive(message_t* msg, void* payload, uint8_t len)
   {
-    car_t *newAlert = payload;
+    car_t *newCar = payload;
 
     call Leds.led0Toggle();
 
-    if (len == sizeof(*newAlert))
+    if (len == sizeof(*newCar))
       {
         ncars ++;
       }

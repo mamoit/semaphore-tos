@@ -2,6 +2,8 @@
  * @author
  **/
 
+#include "../sem.h"
+
 configuration SemaphoreAppC
 {
 }
