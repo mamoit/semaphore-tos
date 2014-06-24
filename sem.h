@@ -5,4 +5,8 @@ typedef nx_struct car_t {
 	nxle_uint8_t plate;
 } car_t;
 
+enum {
+	COL_CARS = 54,
+	AM_THEFT = 99
+};
 #endif

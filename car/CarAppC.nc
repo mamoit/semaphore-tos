@@ -2,22 +2,31 @@
  * @author 
  **/
 
+#include "../sem.h"
+ 
 configuration CarAppC
 {
 }
 implementation
 {
-  components MainC, CarC, LedsC;
-  components new TimerMilliC() as Timer0;
-  components new TimerMilliC() as Timer1;
-  components new TimerMilliC() as Timer2;
+  components CarC, ActiveMessageC, MainC;
+  components ActiveMessageC as Radio; // FIXME
 
+  CarC.Boot -> MainC.Boot;
+  CarC.RadioControl -> ActiveMessageC;
+//   CarC.LowPowerListening -> Radio;
 
-  CarC -> MainC.Boot;
+  /* Instantiate and wire our collection service for theft alerts */
+  components CollectionC, new CollectionSenderC(COL_CARS) as CarSender;
 
-  CarC.Timer0 -> Timer0;
-  CarC.Timer1 -> Timer1;
-  CarC.Timer2 -> Timer2;
-  CarC.Leds -> LedsC;
+  CarC.SemRoot -> CarSender;
+  CarC.CollectionControl -> CollectionC;
+
+  /* Instantiate and wire our local radio-broadcast theft alert and 
+     reception services */
+//   components new AMSenderC(AM_THEFT) as SendTheft, 
+//     new AMReceiverC(AM_THEFT) as ReceiveTheft;
+
+//   CarC.TheftSend -> SendTheft;
+//   CarC.TheftReceive -> ReceiveTheft;
 }
-
