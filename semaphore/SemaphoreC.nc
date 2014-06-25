@@ -25,9 +25,9 @@ module SemaphoreC @safe()
 implementation
 {
 	uint8_t  light      = 0;        // current light on state machine
-	uint16_t timeGreen  = 5 * 1000; // timeout to green
-	uint16_t timeYellow = 1 * 1000; // timeout to yellow
-	uint16_t timeRed    = 5 * 1000; // timeout to red
+	uint16_t timeGreen  = 5 * TICK_SEC_MSEC; // timeout to green
+	uint16_t timeYellow = 1 * TICK_SEC_MSEC; // timeout to yellow
+	uint16_t timeRed    = 5 * TICK_SEC_MSEC; // timeout to red
 
 	uint16_t ncars      = 0;        // number of cars in queue
 
