@@ -2,6 +2,9 @@
  * @author
  **/
 
+#define NEW_PRINTF_SEMANTICS
+#include "printf.h"
+
 #include "../sem.h"
 
 configuration SemaphoreAppC
@@ -11,6 +14,8 @@ implementation
 {
 	components MainC, SemaphoreC, LedsC, ActiveMessageC;
 	components new TimerMilliC() as Timer0;
+	components PrintfC;
+	components SerialStartC;
 
 	SemaphoreC -> MainC.Boot;
 	SemaphoreC.Timer0 -> Timer0;
