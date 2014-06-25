@@ -24,15 +24,15 @@ module SemaphoreC @safe()
 
 implementation
 {
-	uint8_t  light      = 0;        // current light on state machine
-	uint16_t timeGreen  = 5 * TICK_SEC_MSEC; // timeout to green
-	uint16_t timeYellow = 1 * TICK_SEC_MSEC; // timeout to yellow
-	uint16_t timeRed    = 5 * TICK_SEC_MSEC; // timeout to red
+	uint8_t  light      = 0;					// current light on state machine
+	uint16_t timeGreen  = 5 * TICK_SEC_MSEC;	// timeout to green
+	uint16_t timeYellow = 1 * TICK_SEC_MSEC;	// timeout to yellow
+	uint16_t timeRed    = 5 * TICK_SEC_MSEC;	// timeout to red
 
-	uint16_t ncars      = 0;        // number of cars in queue
+	uint16_t ncars      = 0;					// number of cars in queue
 
 	event void Boot.booted() {
-		call Timer0.startOneShot( timeGreen );
+		call Timer0.startOneShot( timeRed );
 		call Leds.led0On();
 		call Leds.led1Off();
 		call Leds.led2Off();
@@ -73,9 +73,8 @@ implementation
 	// Radio Control
 	event void RadioControl.startDone(error_t error) {
 	/* Once the radio has started, we can setup low-power listening, and
-		start the collection and dissemination services. Additionally, we
-		set ourselves as the (sole) root for the theft alert dissemination
-		tree */
+		start the collection service. Additionally, we set ourselves as the
+		(sole) root for the theft alert dissemination tree */
 		if (error == SUCCESS) {
 			call LowPowerListening.setLocalWakeupInterval(512);
 			call CollectionControl.start();
