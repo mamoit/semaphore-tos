@@ -5,7 +5,7 @@
 #include "../sem.h"
 #include "Timer.h"
 
-module CarC
+module CarC @safe()
 {
   uses {
 		interface Boot;
@@ -13,7 +13,7 @@ module CarC
 		interface Send as SemRoot;
 		interface StdControl as CollectionControl;
 		interface SplitControl as RadioControl;
-//		interface LowPowerListening;
+		interface LowPowerListening;
   }
 }
 implementation
@@ -21,7 +21,7 @@ implementation
 	message_t carMsg;
 
 	/* Report theft, based on current settings */
-	void theft() {
+	void report() {
 		/* Get the payload part of alertMsg and fill in our data */
 		car_t *newCar = call SemRoot.getPayload(&carMsg, sizeof(car_t));
 		if (newCar != NULL) {
@@ -44,7 +44,8 @@ implementation
 	event void RadioControl.startDone(error_t ok) {
 		if (ok == SUCCESS) {
 			call CollectionControl.start();
-	//		call LowPowerListening.setLocalWakeupInterval(512);
+			call LowPowerListening.setLocalWakeupInterval(512);
+			report();
 		}
 	}
 

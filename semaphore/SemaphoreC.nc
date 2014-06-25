@@ -19,6 +19,8 @@ module SemaphoreC @safe()
 		interface StdControl as CollectionControl;
 		interface RootControl;
 		interface Receive as CarsReceive;
+		
+		interface Mts300Sounder;
 	}
 }
 
@@ -40,6 +42,8 @@ implementation
 
 		// Radio Control
 		call RadioControl.start();
+		
+		call Mts300Sounder.beep(100);
 	}
 
 	event void Timer0.fired(){
@@ -83,6 +87,9 @@ implementation
 			call LowPowerListening.setLocalWakeupInterval(512);
 			call CollectionControl.start();
 			call RootControl.setRoot();
+			call Leds.led0On();
+			call Leds.led1On();
+			call Leds.led2On();
 		}
 	}
 	event void RadioControl.stopDone(error_t error) { }
@@ -95,6 +102,9 @@ implementation
 		if (len == sizeof(*newCar)) {
 			ncars ++;
 		}
+		call Leds.led0On();
+		call Leds.led1On();
+		call Leds.led2On();
 		return msg;
 	}
 }

@@ -24,5 +24,8 @@ implementation
 	components CC2420ActiveMessageC as Radio;
 	SemaphoreC.LowPowerListening -> Radio;
 	SemaphoreC.RadioControl -> ActiveMessageC;
+	
+	components SounderC;
+	SemaphoreC.Mts300Sounder -> SounderC;
 }
 
