@@ -1,6 +1,5 @@
 /**
- * Implementation for Blink application.  Toggle the red LED when a
- * Timer fires.
+ * @author 
  **/
 
 #include "../sem.h"
