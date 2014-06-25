@@ -32,7 +32,7 @@ implementation
 	uint16_t ncars      = 0;        // number of cars in queue
 
 	event void Boot.booted() {
-		call Timer0.startPeriodic( timeGreen );
+		call Timer0.startOneShot( timeGreen );
 		call Leds.led0On();
 		call Leds.led1Off();
 		call Leds.led2Off();
@@ -42,25 +42,25 @@ implementation
 		if (light == 0) {
 			call Leds.led0Off();
 			call Leds.led1On();
-			call Timer0.startPeriodic( timeYellow );
+			call Timer0.startOneShot( timeYellow );
 			light = 1;
 			dbg("SemaphoreC", "RED -> YELLOW");
 		} else if (light == 1) {
 			call Leds.led1Off();
 			call Leds.led2On();
-			call Timer0.startPeriodic( timeRed );
+			call Timer0.startOneShot( timeRed );
 			light = 2;
 			dbg("SemaphoreC", "YELLOW -> GREEN");
 		} else if (light == 2) {
 			call Leds.led2Off();
 			call Leds.led1On();
-			call Timer0.startPeriodic( timeYellow );
+			call Timer0.startOneShot( timeYellow );
 			light = 3;
 			dbg("SemaphoreC", "GREEN -> YELLOW");
 		} else if (light == 3) {
 			call Leds.led1Off();
 			call Leds.led0On();
-			call Timer0.startPeriodic( timeGreen );
+			call Timer0.startOneShot( timeGreen );
 			light = 0;
 			dbg("SemaphoreC", "YELLOW -> RED");
 		}
