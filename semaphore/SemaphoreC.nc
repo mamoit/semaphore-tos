@@ -89,8 +89,6 @@ implementation
 	{
 		car_t *newCar = payload;
 
-		call Leds.led0Toggle();
-
 		if (len == sizeof(*newCar)) {
 			ncars ++;
 		}
