@@ -14,7 +14,7 @@ module SemaphoreC @safe()
 		
 		interface SplitControl as SerialControl;
 		interface SplitControl as RadioControl;
-		interface LowPowerListening;
+// 		interface LowPowerListening;
 		
 		interface StdControl as CollectionControl;
 		interface RootControl;
@@ -76,7 +76,7 @@ implementation
 		start the collection service. Additionally, we set ourselves as the
 		(sole) root for the theft alert dissemination tree */
 		if (error == SUCCESS) {
-			call LowPowerListening.setLocalWakeupInterval(512);
+// 			call LowPowerListening.setLocalWakeupInterval(512);
 			call CollectionControl.start();
 			call RootControl.setRoot();
 		}

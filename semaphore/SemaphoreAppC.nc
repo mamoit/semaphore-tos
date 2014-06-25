@@ -19,6 +19,6 @@ implementation
 	components CollectionC;
 	SemaphoreC.CollectionControl -> CollectionC;
 	SemaphoreC.RootControl -> CollectionC;
-	SemaphoreC.CarsReceive -> CollectionC.Receive[54];
+	SemaphoreC.CarsReceive -> CollectionC.Receive[COL_CARS];
 }
 

@@ -6,7 +6,7 @@ typedef nx_struct car_t {
 } car_t;
 
 enum {
-	COL_CARS      = 54,
+	COL_CARS      = 54,		// Collection identifier
 	AM_THEFT      = 99,
 	TICK_SEC_MSEC = 1024
 };
