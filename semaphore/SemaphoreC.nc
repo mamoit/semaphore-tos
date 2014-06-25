@@ -14,7 +14,7 @@ module SemaphoreC @safe()
 		
 		interface SplitControl as SerialControl;
 		interface SplitControl as RadioControl;
-// 		interface LowPowerListening;
+		interface LowPowerListening;
 		
 		interface StdControl as CollectionControl;
 		interface RootControl;
@@ -32,10 +32,14 @@ implementation
 	uint16_t ncars      = 0;					// number of cars in queue
 
 	event void Boot.booted() {
+		// Light control
 		call Timer0.startOneShot( timeRed );
 		call Leds.led0On();
 		call Leds.led1Off();
 		call Leds.led2Off();
+
+		// Radio Control
+		call RadioControl.start();
 	}
 
 	event void Timer0.fired(){
@@ -76,7 +80,7 @@ implementation
 		start the collection service. Additionally, we set ourselves as the
 		(sole) root for the theft alert dissemination tree */
 		if (error == SUCCESS) {
-// 			call LowPowerListening.setLocalWakeupInterval(512);
+			call LowPowerListening.setLocalWakeupInterval(512);
 			call CollectionControl.start();
 			call RootControl.setRoot();
 		}
