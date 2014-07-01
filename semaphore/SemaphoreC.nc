@@ -4,6 +4,7 @@
 
 #include "../sem.h"
 #include "Timer.h"
+#include "printf.h"
 
 module SemaphoreC @safe()
 {
@@ -19,8 +20,6 @@ module SemaphoreC @safe()
 		interface StdControl as CollectionControl;
 		interface RootControl;
 		interface Receive as CarsReceive;
-		
-		interface Mts300Sounder;
 	}
 }
 
@@ -43,7 +42,8 @@ implementation
 		// Radio Control
 		call RadioControl.start();
 		
-		call Mts300Sounder.beep(100);
+		printf("Boot\n");
+		printfflush();
 	}
 
 	event void Timer0.fired(){
@@ -52,26 +52,27 @@ implementation
 			call Leds.led1On();
 			call Timer0.startOneShot( timeYellow );
 			light = 1;
-			dbg("SemaphoreC", "RED -> YELLOW");
+			printf("YELLOW\n");
 		} else if (light == 1) {
 			call Leds.led1Off();
 			call Leds.led2On();
 			call Timer0.startOneShot( timeRed );
 			light = 2;
-			dbg("SemaphoreC", "YELLOW -> GREEN");
+			printf("GREEN\n");
 		} else if (light == 2) {
 			call Leds.led2Off();
 			call Leds.led1On();
 			call Timer0.startOneShot( timeYellow );
 			light = 3;
-			dbg("SemaphoreC", "GREEN -> YELLOW");
+			printf("YELLOW\n");
 		} else if (light == 3) {
 			call Leds.led1Off();
 			call Leds.led0On();
 			call Timer0.startOneShot( timeGreen );
 			light = 0;
-			dbg("SemaphoreC", "YELLOW -> RED");
+			printf("RED\n");
 		}
+		printfflush();
 	}
 
 	// Serial Control
@@ -87,9 +88,8 @@ implementation
 			call LowPowerListening.setLocalWakeupInterval(512);
 			call CollectionControl.start();
 			call RootControl.setRoot();
-			call Leds.led0On();
-			call Leds.led1On();
-			call Leds.led2On();
+			printf("Started!\n");
+			printfflush();
 		}
 	}
 	event void RadioControl.stopDone(error_t error) { }
@@ -102,9 +102,8 @@ implementation
 		if (len == sizeof(*newCar)) {
 			ncars ++;
 		}
-		call Leds.led0On();
-		call Leds.led1On();
-		call Leds.led2On();
+		printf("Received!\n");
+		printfflush();
 		return msg;
 	}
 }

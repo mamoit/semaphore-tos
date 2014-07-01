@@ -1,9 +1,8 @@
-# define sensor board
-SENSORBOARD = mts300
-PFLAGS += -DMTS300CA
-
 # networking
 PFLAGS += -I%T/lib/net/ctp -I%T/lib/net -I%T/lib/net/4bitle -I%T/lib/net/drip
+
+# printf
+CFLAGS += -I$(TOSDIR)/lib/printf
 
 COMPONENT=SemaphoreAppC
 
