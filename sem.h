@@ -7,10 +7,13 @@ typedef nx_struct sem_sync_t {
 } sem_sync_t;
 
 enum {
-	COL_CARS      = 11,
+	// Timer multiplier to get seconds
 	TICK_SEC_MSEC = 1024,
+
+	// ActiveMessage config
 	AM_RADIO_COUNT_MSG = 6,
 	
+	// State machine states
 	S_RR2Y = 0,
 	S_RY2G = 1,
 	S_RG2Y = 2,
@@ -20,7 +23,11 @@ enum {
 	S_G2YR = 6,
 	S_Y2RR = 7,
 	
+	// Min time in seconds between accepting sync package.
 	SYNCTIMEOUT = 10*TICK_SEC_MSEC,
+
+	// Check to include in package to avoid interference
+	// it is 35 just because... Anything goes.
 	CHECK = 35,
 };
 #endif

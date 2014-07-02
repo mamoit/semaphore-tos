@@ -29,8 +29,6 @@ implementation
 	uint16_t timeYellow = 1 * TICK_SEC_MSEC;	// timeout to yellow
 	uint16_t timeRed    = (2*1 + 5) * TICK_SEC_MSEC;	// timeout to red
 
-	uint16_t ncars      = 0;					// number of cars in queue
-	
 	message_t packet;
 	bool locked;
 	
@@ -45,7 +43,8 @@ implementation
 		call RadioControl.start();
 	}
 
-	void report() {
+	// Send the current state to the other node
+	void sendState() {
 		if (locked) {
 			return;
 		}
@@ -62,7 +61,8 @@ implementation
 		}
 	}
 	
-	void setLight(uint8_t peerState) {
+	// Set the state to the opposite one of the received
+	void setState(uint8_t peerState) {
 		if (accept_sync) {
 			state = (peerState+3)%8;
 			signal Timer0.fired();
@@ -72,22 +72,28 @@ implementation
 		}
 	}
 	
+	// Turn on green light and all the others off
 	void lightGreen() {
 		call Leds.led0On();
 		call Leds.led1Off();
 		call Leds.led2Off();
 	}
+
+	// Turn on yellow light and all the others off
 	void lightYellow() {
 		call Leds.led0Off();
 		call Leds.led1On();
 		call Leds.led2Off();
 	}
+
+	// Turn on red light and all the others off
 	void lightRed() {
 		call Leds.led0Off();
 		call Leds.led1Off();
 		call Leds.led2On();
 	}
 	
+	// Main state machine
 	event void Timer0.fired(){
 		if (state == S_RR2Y) {
 			call Timer0.startOneShot( timeYellow );
@@ -122,42 +128,47 @@ implementation
 			lightRed();
 			state = S_RR2Y;
 		}
-		report();
+		sendState();
 	}
 	
+	// Time without sync is over, so lets sniff a pkg again
 	event void Timer1.fired(){
 		accept_sync = TRUE;
 	}
 	
+	// Done sending a package
 	event void AMSend.sendDone(message_t* bufPtr, error_t error) {
 		if (&packet == bufPtr) {
 			locked = FALSE;
 		}
 	}
 	
+	// Receive a generic package and act accordingly
 	event message_t* AMReceive.receive(message_t* bufPtr, 
 				   void* payload, uint8_t len) {
 		if (len != sizeof(sem_sync_t)) {
+			call Mts300Sounder.beep(5);
 			return bufPtr;
-			
 		} else {
 			sem_sync_t* rcm = (sem_sync_t*)payload;
 			if (rcm->check != CHECK) {
 				call Mts300Sounder.beep(5);
 				return bufPtr;
 			} else {
-				setLight(rcm->state);
+				setState(rcm->state);
 				return bufPtr;
 			}
 		}
 	}
 	
+	// Beep if radio didn't turn on properly
 	event void RadioControl.startDone(error_t ok) {
-		if (ok == SUCCESS) {
+		if (ok != SUCCESS) {
 			call Mts300Sounder.beep(250);
 		}
 	}
 	
+	// Do nothing when radio is turned off
 	event void RadioControl.stopDone(error_t ok) {}
 
 }
