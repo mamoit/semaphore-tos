@@ -13,13 +13,12 @@ module SemaphoreC @safe()
 		interface Leds;
 		interface Boot;
 		
-		interface SplitControl as SerialControl;
-		interface SplitControl as RadioControl;
-		interface LowPowerListening;
+		interface AMSend;
+		interface SplitControl as AMControl;
+		interface Packet;
+		interface Receive;
 		
-		interface StdControl as CollectionControl;
-		interface RootControl;
-		interface Receive as CarsReceive;
+		interface Mts300Sounder;
 	}
 }
 
@@ -31,7 +30,10 @@ implementation
 	uint16_t timeRed    = 5 * TICK_SEC_MSEC;	// timeout to red
 
 	uint16_t ncars      = 0;					// number of cars in queue
-
+	
+	message_t packet;
+	bool locked;
+	
 	event void Boot.booted() {
 		// Light control
 		call Timer0.startOneShot( timeRed );
@@ -40,10 +42,9 @@ implementation
 		call Leds.led2Off();
 
 		// Radio Control
-		call RadioControl.start();
+		call AMControl.start();
 		
-		printf("Boot\n");
-		printfflush();
+		call Mts300Sounder.beep(250);
 	}
 
 	event void Timer0.fired(){
@@ -52,59 +53,43 @@ implementation
 			call Leds.led1On();
 			call Timer0.startOneShot( timeYellow );
 			light = 1;
-			printf("YELLOW\n");
 		} else if (light == 1) {
 			call Leds.led1Off();
 			call Leds.led2On();
 			call Timer0.startOneShot( timeRed );
 			light = 2;
-			printf("GREEN\n");
 		} else if (light == 2) {
 			call Leds.led2Off();
 			call Leds.led1On();
 			call Timer0.startOneShot( timeYellow );
 			light = 3;
-			printf("YELLOW\n");
 		} else if (light == 3) {
 			call Leds.led1Off();
 			call Leds.led0On();
 			call Timer0.startOneShot( timeGreen );
 			light = 0;
-			printf("RED\n");
-		}
-		printfflush();
-	}
-
-	// Serial Control
-	event void SerialControl.startDone(error_t error) { }
-	event void SerialControl.stopDone(error_t error) { }
-
-	// Radio Control
-	event void RadioControl.startDone(error_t error) {
-	/* Once the radio has started, we can setup low-power listening, and
-		start the collection service. Additionally, we set ourselves as the
-		(sole) root for the theft alert dissemination tree */
-		if (error == SUCCESS) {
-			call LowPowerListening.setLocalWakeupInterval(512);
-			call CollectionControl.start();
-			call RootControl.setRoot();
-			printf("Started!\n");
-			printfflush();
 		}
 	}
-	event void RadioControl.stopDone(error_t error) { }
-
-	// Recieve from collection
-	event message_t *CarsReceive.receive(message_t* msg, void* payload, uint8_t len)
-	{
-		car_t *newCar = payload;
-
-		if (len == sizeof(*newCar)) {
-			ncars ++;
+	
+	event void AMSend.sendDone(message_t* bufPtr, error_t error) {
+		if (&packet == bufPtr) {
+			locked = FALSE;
 		}
-		printf("Received!\n");
-		printfflush();
-		return msg;
 	}
+	
+	event message_t* Receive.receive(message_t* bufPtr, 
+				   void* payload, uint8_t len) {
+		if (len != sizeof(car_t)) {return bufPtr;}
+		call Mts300Sounder.beep(100);
+		return bufPtr;
+	}
+	
+	event void AMControl.startDone(error_t ok) {
+		if (ok == SUCCESS) {
+			// NADA
+		}
+	}
+	
+	event void AMControl.stopDone(error_t ok) {}
+
 }
-

@@ -8,47 +8,71 @@
 module CarC @safe()
 {
   uses {
+		interface Timer<TMilli> as Timer0;
 		interface Boot;
-//		interface Mts300Sounder;
-		interface Send as SemRoot;
-		interface StdControl as CollectionControl;
-		interface SplitControl as RadioControl;
-		interface LowPowerListening;
+		interface Leds;
+		
+		interface AMSend;
+		interface SplitControl as AMControl;
+		interface Packet;
+		interface Receive;
+		
+		interface Mts300Sounder;
   }
 }
 implementation
 {
-	message_t carMsg;
+	message_t packet;
+	bool locked;
 
 	/* Report theft, based on current settings */
 	void report() {
-		/* Get the payload part of alertMsg and fill in our data */
-		car_t *newCar = call SemRoot.getPayload(&carMsg, sizeof(car_t));
-		if (newCar != NULL) {
-			newCar->plate = TOS_NODE_ID;
-			/* and send it... */
-			call SemRoot.send(&carMsg, sizeof *newCar);
+		if (locked) {
+			return;
+		}
+		else {
+			car_t* rcm = (car_t*)call Packet.getPayload(&packet, sizeof(car_t));
+			if (rcm == NULL) {
+				return;
+			}
+			if (call AMSend.send(AM_BROADCAST_ADDR, &packet, sizeof(car_t)) == SUCCESS) {
+				locked = TRUE;
+			}
 		}
 	}
 
 	/* We have nothing to do after messages are sent */
-	event void SemRoot.sendDone(message_t *msg, error_t ok) { }
-
+	event void AMSend.sendDone(message_t* bufPtr, error_t error) {
+		if (&packet == bufPtr) {
+			locked = FALSE;
+		}
+	}
+	
+	event message_t* Receive.receive(message_t* bufPtr, 
+				   void* payload, uint8_t len) {
+		if (len != sizeof(car_t)) {return bufPtr;}
+		call Mts300Sounder.beep(100);
+		return bufPtr;
+	}
+	
 	/* At boot time, start the periodic timer and the radio */
 	event void Boot.booted() {
-		call RadioControl.start();
+		call AMControl.start();
 	}
 
 	/* Radio started. Now start the collection protocol and set the
 		wakeup interval for low-power-listening wakeup to half a second. */
-	event void RadioControl.startDone(error_t ok) {
+	event void AMControl.startDone(error_t ok) {
 		if (ok == SUCCESS) {
-			call CollectionControl.start();
-			call LowPowerListening.setLocalWakeupInterval(512);
-			report();
+			call Leds.led0On();
+			call Timer0.startPeriodic(1000);
 		}
 	}
 
-	event void RadioControl.stopDone(error_t ok) { }
+	event void AMControl.stopDone(error_t ok) { }
+	
+	event void Timer0.fired(){
+		report();
+	}
 
 }

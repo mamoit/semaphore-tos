@@ -12,24 +12,23 @@ configuration SemaphoreAppC
 }
 implementation
 {
-	components MainC, SemaphoreC, LedsC, ActiveMessageC, SerialActiveMessageC;
+	components MainC, SemaphoreC, LedsC;
+	components new AMSenderC(AM_RADIO_COUNT_MSG);
+	components new AMReceiverC(AM_RADIO_COUNT_MSG);
+	components ActiveMessageC;
+	
 	components new TimerMilliC() as Timer0;
-	components PrintfC;
-	components SerialStartC;
 
 	SemaphoreC -> MainC.Boot;
 	SemaphoreC.Timer0 -> Timer0;
 	SemaphoreC.Leds -> LedsC;
 
-	components CollectionC;
-	SemaphoreC.CollectionControl -> CollectionC;
-	SemaphoreC.RootControl -> CollectionC;
-	SemaphoreC.SerialControl -> SerialActiveMessageC;
-	SemaphoreC.CarsReceive -> CollectionC.Receive[COL_CARS];
+	SemaphoreC.Receive -> AMReceiverC;
+	SemaphoreC.AMSend -> AMSenderC;
+	SemaphoreC.AMControl -> ActiveMessageC;
+	SemaphoreC.Packet -> AMSenderC;
 
-
-	components CC2420ActiveMessageC as Radio;
-	SemaphoreC.LowPowerListening -> Radio;
-	SemaphoreC.RadioControl -> ActiveMessageC;
+	components SounderC;
+	SemaphoreC.Mts300Sounder -> SounderC;
 }
 

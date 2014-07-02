@@ -9,17 +9,22 @@ configuration CarAppC
 }
 implementation
 {
-	components CarC, ActiveMessageC, MainC;
-
+	components CarC, MainC, LedsC;
+	components new AMSenderC(AM_RADIO_COUNT_MSG);
+	components new AMReceiverC(AM_RADIO_COUNT_MSG);
+	components ActiveMessageC;
+	
+	components new TimerMilliC() as Timer0;
+	
 	CarC.Boot -> MainC.Boot;
+	CarC.Leds -> LedsC;
+	CarC.Receive -> AMReceiverC;
+	CarC.AMSend -> AMSenderC;
+	CarC.AMControl -> ActiveMessageC;
+	CarC.Packet -> AMSenderC;
 	
-	CarC.RadioControl -> ActiveMessageC;
+	CarC.Timer0 -> Timer0;
 	
-	components CC2420ActiveMessageC as Radio;
-	CarC.LowPowerListening -> Radio;
-
-	components CollectionC, new CollectionSenderC(COL_CARS) as CarSender;
-
-	CarC.SemRoot -> CarSender;
-	CarC.CollectionControl -> CollectionC;
+	components SounderC;
+	CarC.Mts300Sounder -> SounderC;
 }
