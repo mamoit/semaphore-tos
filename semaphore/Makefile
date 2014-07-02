@@ -1,3 +1,0 @@
-COMPONENT=SemaphoreAppC
-include $(MAKERULES)
-
