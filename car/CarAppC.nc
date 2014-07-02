@@ -24,7 +24,4 @@ implementation
 	CarC.Packet -> AMSenderC;
 	
 	CarC.Timer0 -> Timer0;
-	
-	components SounderC;
-	CarC.Mts300Sounder -> SounderC;
 }

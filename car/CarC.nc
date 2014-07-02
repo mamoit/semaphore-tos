@@ -16,8 +16,6 @@ module CarC @safe()
 		interface SplitControl as AMControl;
 		interface Packet;
 		interface Receive;
-		
-		interface Mts300Sounder;
   }
 }
 implementation
@@ -51,7 +49,6 @@ implementation
 	event message_t* Receive.receive(message_t* bufPtr, 
 				   void* payload, uint8_t len) {
 		if (len != sizeof(car_t)) {return bufPtr;}
-		call Mts300Sounder.beep(100);
 		return bufPtr;
 	}
 	
