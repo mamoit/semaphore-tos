@@ -21,6 +21,9 @@ module SemaphoreC @safe()
 		interface Receive as AMReceive;
 		
 		interface Mts300Sounder;
+		
+		interface StdControl as SerialControl;
+		interface UartStream as PCSerial;
 	}
 }
 
@@ -30,7 +33,10 @@ implementation
 	uint16_t timeGreen  = 5 * TICK_SEC_MSEC;	// timeout to green
 	uint16_t timeYellow = 1 * TICK_SEC_MSEC;	// timeout to yellow
 	uint16_t timeRed    = (2*1 + 5) * TICK_SEC_MSEC;	// timeout to red
-
+	
+	char cmdBuffer[MAXSTR] = "";
+	uint8_t cmdBufferPos = 0;
+	
 	message_t packet;
 	bool locked;
 	
@@ -40,7 +46,10 @@ implementation
 		// Light control
 		state = S_RR2Y;
 		signal Timer0.fired();
-
+		
+		// Serial Control
+		call SerialControl.start();
+		
 		// Radio Control
 		call RadioControl.start();
 	}
@@ -63,6 +72,22 @@ implementation
 		}
 	}
 	
+	void serialSendByte(uint8_t num){
+		if (call PCSerial.send(&num,1)!= SUCCESS)
+			call Mts300Sounder.beep(5);
+	}
+	
+	void serialSendNum(uint8_t num){
+		uint8_t temp;
+		
+		do {
+			temp = num % 10;
+			num -= temp;
+			temp += ASCII0;
+			serialSendByte(temp);
+		} while (num != 0);
+	}
+	
 	// Set the state to the opposite one of the received
 	void setState(uint8_t peerState) {
 		if (accept_sync) {
@@ -72,6 +97,35 @@ implementation
 			accept_sync = FALSE;
 			call Timer1.startOneShot( SYNCTIMEOUT );
 		}
+	}
+	
+	void serialPrint(char *str) {
+		uint8_t i;
+		for (i = 0; i<1000; i ++) {
+			if (str[i] == '\0')
+				break;
+			serialSendByte((uint8_t)str[i]);
+		}
+	}
+	
+	void serialSendEnter(){
+		serialSendByte(ASCIILF);
+		serialSendByte(ASCIICR);
+	}
+	
+	void serialPrintln(char *str) {
+		serialPrint(str);
+		serialSendEnter();
+	}
+	
+	task void printScreen() {
+		serialSendByte(ASCIIFF);
+		serialPrint("State: ");
+		serialSendNum(state);
+		serialSendEnter();
+		serialPrintln("########");
+		serialPrint("> ");
+		serialPrint(cmdBuffer);
 	}
 	
 	// Turn on green light and all the others off
@@ -131,6 +185,11 @@ implementation
 			state = S_RR2Y;
 		}
 		sendState();
+		post printScreen();
+	}
+	
+	task void beep() {
+		call Mts300Sounder.beep(100);
 	}
 	
 	// Time without sync is over, so lets sniff a pkg again
@@ -166,11 +225,31 @@ implementation
 	// Beep if radio didn't turn on properly
 	event void RadioControl.startDone(error_t ok) {
 		if (ok != SUCCESS) {
-			call Mts300Sounder.beep(250);
+			call Mts300Sounder.beep(1000);
 		}
 	}
 	
 	// Do nothing when radio is turned off
 	event void RadioControl.stopDone(error_t ok) {}
-
+	
+	async event void PCSerial.sendDone( uint8_t* buf, uint16_t len, error_t error ) {}
+	async event void PCSerial.receivedByte( uint8_t byte ){
+		if(byte == ASCIIDEL) {
+			if (cmdBufferPos <= 0) {
+				post beep();
+			} else {
+				cmdBufferPos --;
+				cmdBuffer[cmdBufferPos] = '\0';
+			}
+			post printScreen();
+		} else if(cmdBufferPos <= MAXSTR -1){
+			cmdBuffer[cmdBufferPos] = byte;
+			cmdBufferPos ++;
+			cmdBuffer[cmdBufferPos] = '\0';
+			post printScreen();
+		} else {
+			post beep();
+		}
+	}
+	async event void PCSerial.receiveDone( uint8_t* buf, uint16_t len, error_t error ){}
 }

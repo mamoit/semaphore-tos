@@ -39,5 +39,10 @@ implementation
 	// If it gives trouble comment it and on the SemphoreC too
 	components SounderC;
 	SemaphoreC.Mts300Sounder -> SounderC;
+	
+ 	components PlatformSerialC;
+	SemaphoreC.PCSerial -> PlatformSerialC;
+	SemaphoreC.SerialControl -> PlatformSerialC;
+	
+	
 }
-
