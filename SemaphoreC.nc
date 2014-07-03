@@ -119,13 +119,36 @@ implementation
 	}
 	
 	task void printScreen() {
+		// Clear the screen
 		serialSendByte(ASCIIFF);
+		
+		// State machine state
 		serialPrint("State: ");
 		serialSendNum(state);
 		serialSendEnter();
+		
+		// Light being displayed
+		serialPrint("Light: ");
+		if (state == S_G2YR) {
+			serialPrintln("GREEN");
+		} else if (state == S_Y2GR || state == S_Y2RR) {
+			serialPrintln("YELLOW");
+		} else {
+			serialPrintln("RED");
+		}
+		
 		serialPrintln("########");
+		
 		serialPrint("> ");
 		serialPrint(cmdBuffer);
+	}
+	
+	task void runCommand() {
+		atomic {
+			cmdBufferPos = 0;
+			cmdBuffer[0] = '\0';
+		}
+		post printScreen();
 	}
 	
 	// Turn on green light and all the others off
@@ -242,6 +265,8 @@ implementation
 				cmdBuffer[cmdBufferPos] = '\0';
 			}
 			post printScreen();
+		} else if(byte == ASCIICR) {
+			post runCommand();
 		} else if(cmdBufferPos <= MAXSTR -1){
 			cmdBuffer[cmdBufferPos] = byte;
 			cmdBufferPos ++;
