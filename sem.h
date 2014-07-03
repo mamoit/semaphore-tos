@@ -3,12 +3,25 @@
 
 typedef nx_struct sem_sync_t {
 	nxle_uint16_t state;
+	
 	nxle_uint8_t check;
 } sem_sync_t;
 
+typedef nx_struct time_sync_t {
+	nxle_uint16_t yellow;
+	nxle_uint16_t green;
+	
+	nxle_uint8_t check;
+} time_sync_t;
+
 enum {
 	// Timer multiplier to get seconds
-	TICK_SEC_MSEC = 128,//1024,
+	TICK_SEC_MSEC = 1024,
+	
+	// Default times
+	T_GREEN  = 3,
+	T_YELLOW = 1,
+	T_RED    = 1,
 
 	// ActiveMessage config
 	AM_RADIO_COUNT_MSG = 6,
