@@ -1,5 +1,7 @@
 /**
- * @author
+ * @author Miguel Almeida
+ * @author Gonçalo Silva
+ * @date July 2014
  **/
 
 #include "sem.h"
