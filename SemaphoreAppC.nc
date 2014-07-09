@@ -13,8 +13,10 @@ implementation
 {
 	components SemaphoreC;
 	components MainC;
+
+	// Boot
 	SemaphoreC -> MainC.Boot;
-	
+
 	// Timers
 	components new TimerMilliC() as Timer0;
 	components new TimerMilliC() as Timer1;
@@ -30,6 +32,7 @@ implementation
 	components new AMReceiverC(AM_RADIO_COUNT_MSG);
 	components ActiveMessageC;
 
+	// Active Messages
 	SemaphoreC.AMReceive -> AMReceiverC;
 	SemaphoreC.AMSend -> AMSenderC;
 	SemaphoreC.RadioControl -> ActiveMessageC;
@@ -39,8 +42,9 @@ implementation
 	// If it gives trouble comment it and on the SemphoreC too
 	components SounderC;
 	SemaphoreC.Mts300Sounder -> SounderC;
-	
- 	components PlatformSerialC;
+
+	// Serial communications
+	components PlatformSerialC;
 	SemaphoreC.PCSerial -> PlatformSerialC;
 	SemaphoreC.SerialControl -> PlatformSerialC;
 	
