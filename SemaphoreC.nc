@@ -10,18 +10,26 @@
 module SemaphoreC @safe()
 {
 	uses {
-		interface Timer<TMilli> as Timer0;
-		interface Timer<TMilli> as Timer1;
-		interface Leds;
+		// Boot
 		interface Boot;
 		
+		// Timmers
+		interface Timer<TMilli> as Timer0;
+		interface Timer<TMilli> as Timer1;
+		
+		// LEDs
+		interface Leds;
+		
+		// Sounder
+		interface Mts300Sounder;
+		
+		// Active Messages
 		interface AMSend;
 		interface SplitControl as RadioControl;
 		interface Packet;
 		interface Receive as AMReceive;
 		
-		interface Mts300Sounder;
-		
+		// Serial
 		interface StdControl as SerialControl;
 		interface UartStream as PCSerial;
 	}
@@ -29,14 +37,15 @@ module SemaphoreC @safe()
 
 implementation
 {
-	uint8_t  state;					// current light on state machine
-	uint16_t timeGreen  = T_GREEN  * TICK_SEC_MSEC;	// timeout to green
-	uint16_t timeYellow = T_YELLOW * TICK_SEC_MSEC;	// timeout to yellow
-	uint16_t timeRed    = T_RED    * TICK_SEC_MSEC;	// timeout to red
+	uint8_t  state;                                  // current light on state machine
+	uint16_t timeGreen  = T_GREEN  * TICK_SEC_MSEC;  // time in green
+	uint16_t timeYellow = T_YELLOW * TICK_SEC_MSEC;  // time in yellow
+	uint16_t timeRed    = T_RED    * TICK_SEC_MSEC;  // common time in red
 	
-	uint16_t peerTimeGreen;
-	uint16_t peerTimeYellow;
+	uint16_t peerTimeGreen;  // Other node's time in green
+	uint16_t peerTimeYellow; // Other node's time in yellow
 	
+	// Serial command buffer
 	char cmdBuffer[MAXSTR] = "";
 	uint8_t cmdBufferPos = 0;
 	
@@ -45,7 +54,9 @@ implementation
 	
 	bool accept_sync = TRUE;
 	
+	// Boot event
 	event void Boot.booted() {
+		// Default peer times assumed
 		peerTimeGreen = timeGreen;
 		peerTimeYellow = timeYellow;
 		
@@ -78,6 +89,7 @@ implementation
 		}
 	}
 	
+	// Sends the current times to the other node
 	void sendTimes() {
 		if (locked) {
 			return;
@@ -96,15 +108,18 @@ implementation
 		}
 	}
 	
+	// Sends a byte to the terminal.
+	//beep shortly (5ms) if error occured.
 	void serialSendByte(uint8_t num){
 		if (call PCSerial.send(&num,1)!= SUCCESS)
 			call Mts300Sounder.beep(5);
 	}
 	
+	// Prints a number to the serial terminal
 	void serialSendNum(uint16_t num){
 		uint8_t temp;
 		
-		char buf[10]; //FIXME hardcoded
+		char buf[MAXSTR];
 		uint8_t i = 0, j;
 		
 		do {
@@ -131,30 +146,36 @@ implementation
 		}
 	}
 	
+	// Change the times of green and yellow
+	//used when received a time update package
 	void setTimes(uint16_t green, uint16_t yellow) {
 		peerTimeGreen = green;
 		peerTimeYellow = yellow;
 	}
 	
+	// Print a string
 	void serialPrint(char *str) {
 		uint8_t i;
-		for (i = 0; i<1000; i ++) { //FIXME hardcoded value!
+		for (i = 0; i<MAXSER; i ++) {
 			if (str[i] == '\0')
 				break;
 			serialSendByte((uint8_t)str[i]);
 		}
 	}
 	
+	// Print a \n
 	void serialSendEnter(){
 		serialSendByte(ASCIILF);
 		serialSendByte(ASCIICR);
 	}
 	
+	// Print a string plus a \n
 	void serialPrintln(char *str) {
 		serialPrint(str);
 		serialSendEnter();
 	}
 	
+	// Sends an updated screen to the serial terminal
 	task void printScreen() {
 		// Clear the screen
 		serialSendByte(ASCIIFF);
@@ -176,6 +197,7 @@ implementation
 		
 		serialPrintln("########");
 		
+		// Current times
  		serialPrintln("Times:");
  		serialPrint("Green:  ");
 		serialSendNum(timeGreen);
@@ -189,14 +211,17 @@ implementation
  		
  		serialSendEnter();
 		
+		// Prompt line
 		serialPrint("> ");
 		serialPrint(cmdBuffer);
 	}
 	
+	// Beeps the sounder for 100ms.
 	task void beep() {
 		call Mts300Sounder.beep(100);
 	}
 	
+	// Compares the cmdBuffer string with another given as argument
 	bool strCompare(char *str, uint8_t pos) {
 		uint8_t i;
 		
@@ -210,6 +235,8 @@ implementation
 		return FALSE;
 	}
 	
+	// Translate cmdBuffer into an integer
+	//starting in position pos of the cmdBuffer
 	uint16_t strToi(uint8_t pos) {
 		uint8_t i;
 		uint16_t val = 0;
@@ -223,6 +250,7 @@ implementation
 		return val;
 	}
 	
+	// Command parser
 	task void runCommand() {
 		bool res;
 		atomic {
@@ -371,7 +399,10 @@ implementation
 	// Do nothing when radio is turned off
 	event void RadioControl.stopDone(error_t ok) {}
 	
+	// Do nothing when finished sending something to the computer
 	async event void PCSerial.sendDone( uint8_t* buf, uint16_t len, error_t error ) {}
+	
+	// Process a byte that was just received a byte on the serial line
 	async event void PCSerial.receivedByte( uint8_t byte ){
 		if(byte == ASCIIDEL) {
 			if (cmdBufferPos <= 0) {
@@ -392,5 +423,7 @@ implementation
 			post beep();
 		}
 	}
+	
+	// Do nothing when finished receiving on the serial line
 	async event void PCSerial.receiveDone( uint8_t* buf, uint16_t len, error_t error ){}
 }
